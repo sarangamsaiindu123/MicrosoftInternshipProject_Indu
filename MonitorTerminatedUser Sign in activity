@@ -1,0 +1,18 @@
+Analytical Rule :
+MonitorTerminatedUser Sign in activity
+
+Description:
+This analytical rule monitors users from terminated users watchlist and triggers an alert and incident when there is a successful login for the terminated users from the watchlist.
+
+Tactics:
+Credential Access
+
+KQL Query:
+
+let TerminatedUser =_GetWatchlist('MonitorTerminatedUsersList');
+SigninLogs
+| where ResultType ==0
+| project ResultType,Identity,AlternateSignInName,TimeGenerated,ResultDescription
+| join kind=inner TerminatedUser on ($left.AlternateSignInName ==$right.Caller)
+| where AlternateSignInName == "CompromisedUser@indusuresh50gmail.onmicrosoft.com"
+| extend AlternateSignInName = Caller
