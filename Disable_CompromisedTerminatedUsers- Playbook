@@ -1,0 +1,128 @@
+As a response action I have created a playbook called "Disable_CompromisedTerminatedUsers", which will immediately take action and disable the terminated/compromised user account in Azure Active Directory.
+
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "actions": {
+            "Add_comment_to_incident_(V3)": {
+                "inputs": {
+                    "body": {
+                        "incidentArmId": "@body('Alert_-_Get_incident')?['id']",
+                        "message": "<p>Terminated User account  has been disabled in AAD via playbook.</p>"
+                    },
+                    "host": {
+                        "connection": {
+                            "name": "@parameters('$connections')['azuresentinel']['connectionId']"
+                        }
+                    },
+                    "method": "post",
+                    "path": "/Incidents/Comment"
+                },
+                "runAfter": {
+                    "For_each": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "ApiConnection"
+            },
+            "Alert_-_Get_incident": {
+                "inputs": {
+                    "host": {
+                        "connection": {
+                            "name": "@parameters('$connections')['azuresentinel']['connectionId']"
+                        }
+                    },
+                    "method": "get",
+                    "path": "/Incidents/subscriptions/@{encodeURIComponent(triggerBody()?['WorkspaceSubscriptionId'])}/resourceGroups/@{encodeURIComponent(triggerBody()?['WorkspaceResourceGroup'])}/workspaces/@{encodeURIComponent(triggerBody()?['WorkspaceId'])}/alerts/@{encodeURIComponent(triggerBody()?['SystemAlertId'])}"
+                },
+                "runAfter": {},
+                "type": "ApiConnection"
+            },
+            "Entities_-_Get_Accounts": {
+                "inputs": {
+                    "body": "@triggerBody()?['Entities']",
+                    "host": {
+                        "connection": {
+                            "name": "@parameters('$connections')['azuresentinel']['connectionId']"
+                        }
+                    },
+                    "method": "post",
+                    "path": "/entities/account"
+                },
+                "runAfter": {
+                    "Alert_-_Get_incident": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "ApiConnection"
+            },
+            "For_each": {
+                "actions": {
+                    "Update_user": {
+                        "inputs": {
+                            "body": {
+                                "accountEnabled": false
+                            },
+                            "host": {
+                                "connection": {
+                                    "name": "@parameters('$connections')['azuread']['connectionId']"
+                                }
+                            },
+                            "method": "patch",
+                            "path": "/v1.0/users/@{encodeURIComponent(concat(items('For_each')?['Name'], '@', items('for_each')?['UPNSuffix']))}"
+                        },
+                        "runAfter": {},
+                        "type": "ApiConnection"
+                    }
+                },
+                "foreach": "@body('Entities_-_Get_Accounts')?['Accounts']",
+                "runAfter": {
+                    "Entities_-_Get_Accounts": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Foreach"
+            }
+        },
+        "contentVersion": "1.0.0.0",
+        "outputs": {},
+        "parameters": {
+            "$connections": {
+                "defaultValue": {},
+                "type": "Object"
+            }
+        },
+        "triggers": {
+            "When_a_response_to_an_Azure_Sentinel_alert_is_triggered": {
+                "inputs": {
+                    "body": {
+                        "callback_url": "@{listCallbackUrl()}"
+                    },
+                    "host": {
+                        "connection": {
+                            "name": "@parameters('$connections')['azuresentinel']['connectionId']"
+                        }
+                    },
+                    "path": "/subscribe"
+                },
+                "type": "ApiConnectionWebhook"
+            }
+        }
+    },
+    "parameters": {
+        "$connections": {
+            "value": {
+                "azuread": {
+                    "connectionId": "/subscriptions/55a29cc3-5d5f-489f-9cfd-e7f8a042ccf8/resourceGroups/ProjectIndu/providers/Microsoft.Web/connections/azuread",
+                    "connectionName": "azuread",
+                    "id": "/subscriptions/55a29cc3-5d5f-489f-9cfd-e7f8a042ccf8/providers/Microsoft.Web/locations/eastus/managedApis/azuread"
+                },
+                "azuresentinel": {
+                    "connectionId": "/subscriptions/55a29cc3-5d5f-489f-9cfd-e7f8a042ccf8/resourceGroups/ProjectIndu/providers/Microsoft.Web/connections/azuresentinel",
+                    "connectionName": "azuresentinel",
+                    "id": "/subscriptions/55a29cc3-5d5f-489f-9cfd-e7f8a042ccf8/providers/Microsoft.Web/locations/eastus/managedApis/azuresentinel"
+                }
+            }
+        }
+    }
+}
