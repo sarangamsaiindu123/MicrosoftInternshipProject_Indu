@@ -1,0 +1,22 @@
+Analytical Rule :
+MonitorTerminatedUserLogin and azure activity
+
+Description:
+This analytical rule monitors users from terminated users watchlist and triggers an alert and incident when there is a successful login followed by azure activity for the terminated users from the watchlist.
+
+Tactics:
+Credential Access
+
+KQL Query
+
+let TerminatedUser =_GetWatchlist('MonitorTerminatedUsersList');
+AzureActivity
+| where OperationName !='' and ActivityStatus in ("Succeeded","Failed","Started")
+| where Caller != ''
+| extend Account_Entity = Caller
+| extend IP_Entity = CallerIpAddress
+| join kind = inner TerminatedUser on $left.Caller ==$right.Caller
+| where Caller == "CompromisedUser@indusuresh50gmail.onmicrosoft.com"
+| summarize count() by TimeGenerated,OperationId,OperationName,Caller,IP_Entity
+| extend Account_Entity = Caller
+| extend CallerIpAddress = IP_Entity
