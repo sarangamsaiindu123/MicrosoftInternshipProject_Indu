@@ -30,4 +30,4 @@ As a response action I have created a playbook called "Disable_CompromisedTermin
 
 I have also tried to use Power BI service to generate reports of the user sign-ins and the azure activity.
 
-The entire use case scenario is implemented,executed and recorded as a video. The video file "MicrosoftInternshipProject_Indu.mp4" has also been uploaded in the git repository linked to this project.
+The entire use case scenario is implemented,executed and recorded as a video. The video file "Project_Demo_Video.mp4" has also been uploaded in the git repository linked to this project.
