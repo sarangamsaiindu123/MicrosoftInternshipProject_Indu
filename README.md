@@ -1,10 +1,20 @@
 Welcome to the MicrosoftInternshipProject_Indu wiki!
 
-Motive of this project is to analyse and mitigate or respond to the cyber threats which we see in wide variety of organizations. Using Microsoft services like - Microsoft Sentinel, Power BI and Azure Active Directory
+Synopsis: Motive of this project is to analyse and mitigate or respond to the cyber threats which we see in wide variety of organizations. Using Microsoft services like - Microsoft Sentinel, Power BI and Azure Active Directory
 
-I have created two use cases as detailed below with the purpose:
+This project allows a security team to monitor and investigate suspicious terminated user sign - in and azure activities using Azure Sentinel and also allows to automate response action using playbooks/logic apps and finally export the data as reports and visualize them in Power BI service.
+
+Summary:
+
+The idea of this project is to investigate and automate the security response actions to suspicious azure user activities and user sign-ins using Azure Services like Azure Sentinel, Azure Logic APPS and Power BI.
+
+I have used Azure Sentinel Service to monitor and Investigate suspicious terminated user sign-ins and activities. I made use of a feature called "Watchlist" in Azure Sentinel wherein I have created a watchlist which contains a csv file with list of all the terminated users of an organization. This watchlist will be used as a lookup data in the below Analytical rules to generate incidents in Azure Sentinel.
+
+I have created two use cases or Analytical rules to find sign-ins and azure activity done by the terminated users after leaving an organization.
 
 Use Case 1 : MonitorTerminatedUserLogin and azure activity
+
+The Analytical rule "MonitorTerminatedUserLogin and azure activity" shows all the azure activities done by the terminated user and triggers an incident in azure sentinel for investigation by the security team
 
 Description: This analytical rule monitors users from terminated users watchlist and triggers an alert and incident when there is a successful login followed by azure activity for the terminated users from the watchlist.
 
@@ -16,6 +26,8 @@ let TerminatedUser =_GetWatchlist('MonitorTerminatedUsersList'); AzureActivity |
 
 Use Case 2: MonitorTerminatedUser Sign in activity
 
+The Analytical rule "MonitorTerminatedUser Sign in activity" monitors the terminated user sign-in logs and triggers an incident when there is a sign-in by the terminated user from the watchlist.
+
 Description: This analytical rule monitors users from terminated users watchlist and triggers an alert and incident when there is a successful login for the terminated users from the watchlist.
 
 Tactics: Credential Access
@@ -24,10 +36,9 @@ KQL Query
 
 let TerminatedUser =_GetWatchlist('MonitorTerminatedUsersList'); SigninLogs | where ResultType ==0 | project ResultType,Identity,AlternateSignInName,TimeGenerated,ResultDescription | join kind=inner TerminatedUser on ($left.AlternateSignInName ==$right.Caller) | where AlternateSignInName == "CompromisedUser@indusuresh50gmail.onmicrosoft.com" | extend AlternateSignInName = Caller
 
-The motive of the above use cases is to create a watchlist for all the terminated users of the organization and monitor if there are sign-in activity followed by azure activity for the users in the watchlist. If the scenario matches it triggers Incidents and having the automation rule in place to change the status of incident from new to active and assign the owner to that incident followed by changing the severity of the incident to high so that the analyst will be able to work on it with high priority.
+The motive of the above use cases is to get lookup data from the watchlist for all the terminated users of the organization and monitor if there are sign-in activity followed by azure activity for the users. If the scenario matches it triggers Incidents and having the automation rule in place to change the status of incident from new to active and assign the owner to that incident followed by changing the severity of the incident to high so that the analyst will be able to work on it with high priority.
 
+Once the Security team investigates the incident and concludes the user activity and sign-in is suspicious then they can run a playbook/logic app to disable the terminated user account which is still active in the Azure Active Directory.
 As a response action I have created a playbook called "Disable_CompromisedTerminatedUsers", which will immediately take action and disable the terminated/compromised user account in Azure Active Directory.
 
-I have also tried to use Power BI service to generate reports of the user sign-ins and the azure activity.
-
-The entire use case scenario is implemented,executed and recorded as a video. The video file "Project_Demo_Video.mp4" has also been uploaded in the git repository linked to this project.
+Finally, I have used Power BI service to export the terminated user sign-ins and azure activity as reports and generate visualizations for clear understanding and audit purpose using M query in Azure Sentinel, which allows security team to maintain end to end sign-in and azure activity log reports of the terminated users.
